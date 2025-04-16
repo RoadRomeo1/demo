@@ -1,15 +1,17 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.Product;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.entity.Product;
+
 import jakarta.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class PaginationService {
@@ -28,11 +30,20 @@ public class PaginationService {
         }
     }
 
-    public Page<Product> getProducts(int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), productList.size());
-        List<Product> paginatedList = productList.subList(start, end);
-        return new PageImpl<>(paginatedList, pageable, productList.size());
+    public Page<Product> getProducts(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Page number and size must be greater than zero.");
+        }
+
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, productList.size());
+
+        // Handle out-of-bounds requests
+        if (fromIndex >= productList.size()) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(page, size), productList.size());
+        }
+
+        List<Product> subList = productList.subList(fromIndex, toIndex);
+        return new PageImpl<>(subList, PageRequest.of(page, size), productList.size());
     }
 }

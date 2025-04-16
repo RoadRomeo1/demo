@@ -1,25 +1,36 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.Product;
-import com.example.demo.service.PaginationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
-@RequestMapping("/api/products")
+import com.example.demo.entity.Product;
+import com.example.demo.service.PaginationService;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
 public class ProductController {
 
     @Autowired
     private PaginationService paginationService;
 
-    @GetMapping
-    public ResponseEntity<Page<Product>> getProducts(@RequestParam(defaultValue = "0") int pageNo, @RequestParam(defaultValue = "10") int pageSize){
-        Page<Product> products = paginationService.getProducts(pageNo, pageSize);
-        return  ResponseEntity.ok(products);
+    @GetMapping("/api/products")
+    public Page<Product> getProducts(
+            @RequestParam int pageNo,
+            @RequestParam int pageSize) {
+        return paginationService.getProducts(pageNo, pageSize);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", ex.getMessage());
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 }
